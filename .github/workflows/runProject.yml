@@ -1,0 +1,30 @@
+name: Run Project
+
+on:
+  schedule:
+    - cron: "0 9,21 * * *"  # Runs every day at 09:00 and 21:00
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repository
+      - uses: actions/checkout@v4
+
+      # 2. Set up Node.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Run your script with custom arguments
+      - name: Run script
+        run: npm run dev -- --threshold
+        env:
+          SRP_METAMASK: ${{ secrets.SRP_METAMASK }}
+          SRP_KRAKEN: ${{ secrets.SRP_METAMASK }}
+          ADDRESS_KRAKEN: ${{ secrets.SRP_METAMASK }}
