@@ -43,6 +43,9 @@ const PROCEDURE = {
  * Main function
  */
 async function main() {
+  console.log(wallet_kraken);
+  console.log(wallet_metamask);
+
   // Claim $FLOCK rewards and collect them in Kraken wallet
   await claimAndTransfer();
 
