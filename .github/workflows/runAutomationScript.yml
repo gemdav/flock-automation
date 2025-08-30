@@ -1,4 +1,4 @@
-name: Run Project
+name: Run Automation Script
 
 on:
   schedule:
