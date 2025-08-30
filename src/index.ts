@@ -44,6 +44,7 @@ const PROCEDURE = {
  */
 async function main() {
   //TODO: delete me
+  console.log("Values:");
   console.log(wallet_kraken);
   console.log(wallet_metamask);
   console.log(process.env.ADDRESS_KRAKEN);
