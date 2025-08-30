@@ -11,10 +11,11 @@
   "dependencies": {
     "dotenv": "^17.2.1",
     "ethers": "^6.15.0",
-    "readline-sync": "^1.4.10"
+    "inquirer": "^12.9.4"
   },
   "devDependencies": {
     "@swc/core": "^1.13.3",
+    "@types/inquirer": "^9.0.9",
     "@types/node": "^24.3.0",
     "@types/readline-sync": "^1.4.8",
     "ts-node": "^10.9.2",

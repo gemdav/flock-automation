@@ -21,61 +21,73 @@ import { delegate } from "./transactions/flock/delegate.ts";
 import { getQuote } from "./transactions/uniswap/getQuote.ts";
 import { swapExactInputSingle } from "./transactions/uniswap/swap.ts";
 import { formatUnits } from "ethers";
-import readlineSync from "readline-sync";
 import { unwrap } from "./transactions/weth/unwrap.ts";
+import inquirer from "inquirer";
 
 const wallet_metamask = createWalletFromSRP(process.env.SRP_METAMASK!);
 const wallet_kraken = createWalletFromSRP(process.env.SRP_KRAKEN!);
 const address_kraken = process.env.ADDRESS_KRAKEN!;
 
-const DRY_RUN = false; // Set to true for dry run mode
+const DRY_RUN = false;
 
+const FLOCK_ETH_THRESOLD = 0.00005;
+
+type ProcedureChoice = (typeof PROCEDURE)[keyof typeof PROCEDURE];
+const PROCEDURE = {
+  DELEGATE: 1,
+  SELL: 2,
+  STOP: 3,
+};
+
+/**
+ * Main function
+ */
 async function main() {
   // Claim $FLOCK rewards and collect them in Kraken wallet
-  log("----------------------------------------------------------------");
-  log("### Claim $FLOCK rewards and collect in Kraken wallet ###");
   await claimAndTransfer();
 
-  // Get quotes
-  log("----------------------------------------------------------------");
-  log("### Get $FLOCK quotes ###");
-  let quoteFlockEth = await getQuote(CONTRACT_FLOCK, CONTRACT_WETH);
-  log(`$FLOCK => $WETH quote: ${quoteFlockEth?.rate}`);
-  let quoteEthEur = await getQuote(CONTRACT_WETH, CONTRACT_EURC);
-  log(`$WETH => $EURC quote: ${quoteEthEur?.rate}`);
-  let quoteFlockEur = quoteFlockEth?.rate! * quoteEthEur?.rate!;
-  log(`$FLOCK => $EURC quote: ${quoteFlockEur}`);
-  let quoteEthUsd = await getQuote(CONTRACT_WETH, CONTRACT_USDC);
-  log(`$WETH => $USDC quote: ${quoteEthUsd?.rate}`);
-  let quoteFlockUsd = quoteFlockEth?.rate! * quoteEthUsd?.rate!;
-  log(`$FLOCK => $USDC quote: ${quoteFlockUsd}`);
-
-  const choice = readlineSync
-    .question(
-      "How to proceed with the claimed $FLOCK?:\n(a) Exchange for $gmFLOCK and delegate\n(b) Sell for $ETH\n(c) Stop program\nYour choice: "
-    )
-    .trim()
-    .toLowerCase();
+  await sleep(5000);
+  let choice: ProcedureChoice;
+  const args = process.argv.slice(2);
+  if (args.includes("--delegate")) {
+    choice = PROCEDURE.DELEGATE;
+  } else if (args.includes("--sell")) {
+    choice = PROCEDURE.SELL;
+  } else if (args.includes("--stop")) {
+    choice = PROCEDURE.STOP;
+  } else if (args.includes("--threshold")) {
+    let flockEth = (await getQuote(CONTRACT_FLOCK, CONTRACT_WETH))?.rate || 0;
+    log(`Threshold: ${FLOCK_ETH_THRESOLD}, current rate: ${flockEth}`);
+    choice =
+      flockEth > FLOCK_ETH_THRESOLD ? PROCEDURE.SELL : PROCEDURE.DELEGATE;
+  } else {
+    // Get quotes
+    await getRelevantQuotes();
+    choice = await promptProcedure();
+  }
 
   switch (choice) {
-    case "a":
+    case PROCEDURE.DELEGATE:
       // Exchange $FLOCK for $gmFLOCK and delegate it
       log("----------------------------------------------------------------");
       log("### Exchange $FLOCK for $gmFLOCK and delegate it ###");
+      log("----------------------------------------------------------------");
       await exchangeAndDelegate();
       break;
-    case "b":
+
+    case PROCEDURE.SELL:
       // Sell $FLOCK if threshold rate is met
-      //log("Option currently not available.");
-      //return;
       log("----------------------------------------------------------------");
       log("### Sell $FLOCK for $ETH ###");
+      log("----------------------------------------------------------------");
       await sellFlock();
       break;
-    case "c":
-      log("Stopping the program.");
+
+    case PROCEDURE.STOP:
       // Stop the program
+      log("Stopping the program.");
       return;
+
     default:
       // Stop the program with an invalid choice
       log("Invalid choice. Stopping the program.");
@@ -84,39 +96,79 @@ async function main() {
 }
 
 /**
+ * Get the procedure using a user prompt
+ *
+ * @returns the procedure
+ */
+async function promptProcedure(): Promise<ProcedureChoice> {
+  const procedure = await inquirer.prompt([
+    {
+      type: "list",
+      name: "choice",
+      message: "How to proceed with the claimed $FLOCK:",
+      choices: [
+        {
+          name: "Exchange for $gmFLOCK and delegate",
+          value: { id: PROCEDURE.DELEGATE },
+        },
+        { name: "Sell for $ETH", value: { id: PROCEDURE.SELL } },
+        { name: "Stop program", value: { id: PROCEDURE.STOP } },
+      ],
+    },
+  ]);
+  return procedure.choice.id;
+}
+
+/**
+ * Gets the relevant quotes to make a procedure decision
+ */
+async function getRelevantQuotes() {
+  log("----------------------------------------------------------------");
+  log("### Get $FLOCK quotes ###");
+  log("----------------------------------------------------------------");
+  const [flockEth, ethEur, ethUsd] = await Promise.all([
+    getQuote(CONTRACT_FLOCK, CONTRACT_WETH),
+    getQuote(CONTRACT_WETH, CONTRACT_EURC),
+    getQuote(CONTRACT_WETH, CONTRACT_USDC),
+  ]);
+  const FlockEur = (flockEth?.rate ?? 0) * (ethEur?.rate ?? 0);
+  const FlockUsd = (flockEth?.rate ?? 0) * (ethUsd?.rate ?? 0);
+  log(`$FLOCK => $WETH quote: ${flockEth?.rate}`);
+  log(`$WETH => $EURC quote: ${ethEur?.rate}`);
+  log(`$FLOCK => $EURC quote: ${FlockEur}`);
+  log(`$WETH => $USDC quote: ${ethUsd?.rate}`);
+  log(`$FLOCK => $USDC quote: ${FlockUsd}`);
+}
+
+/**
  * Claims $FLOCK rewards for MetaMask and Kraken wallets and
  * transfers the MetaMask $FLOCK balance to the Kraken wallet.
  */
 async function claimAndTransfer() {
-  // Claim $FLOCK rewards for Kraken wallet
-  const claimTxKraken = await claimRewards(
-    wallet_kraken,
-    CONTRACT_FLOCK_DELEGATE,
-    DRY_RUN
-  );
-  log(`Claim tx (Kraken): ${claimTxKraken}`);
+  log("----------------------------------------------------------------");
+  log("### Claim $FLOCK rewards and collect in Kraken wallet ###");
+  log("----------------------------------------------------------------");
 
-  // Get $FLOCK balance in Kraken wallet
+  // Claim $FLOCK rewards for both wallets in parallel
+  const [claimTxKraken, claimTxMetaMask] = await Promise.all([
+    claimRewards(wallet_kraken, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
+    claimRewards(wallet_metamask, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
+  ]);
+  log(`Claim tx (Kraken): ${claimTxKraken}`);
+  log(`Claim tx (MetaMask): ${claimTxMetaMask}`);
+
+  // Fetch $FLOCK balances for both wallets
   await sleep(5000);
-  const flockBalanceKraken = await balanceOf(wallet_kraken, CONTRACT_FLOCK);
+  const [flockBalanceKraken, flockBalanceMetaMask] = await Promise.all([
+    balanceOf(wallet_kraken, CONTRACT_FLOCK),
+    balanceOf(wallet_metamask, CONTRACT_FLOCK),
+  ]);
   log(
     `$FLOCK balance (Kraken): ${formatUnits(
       flockBalanceKraken,
       CONTRACT_FLOCK.decimals
     )}`
   );
-
-  // Claim $FLOCK rewards for MetaMask wallet
-  const claimTxMetaMask = await claimRewards(
-    wallet_metamask,
-    CONTRACT_FLOCK_DELEGATE,
-    DRY_RUN
-  );
-  log(`Claim tx (MetaMask): ${claimTxMetaMask}`);
-
-  // Get $FLOCK balance in MetaMask wallet
-  await sleep(5000);
-  const flockBalanceMetaMask = await balanceOf(wallet_metamask, CONTRACT_FLOCK);
   log(
     `$FLOCK balance (MetaMask): ${formatUnits(
       flockBalanceMetaMask,
@@ -155,7 +207,6 @@ async function claimAndTransfer() {
  */
 async function sellFlock() {
   // Get $FLOCK balance in Kraken wallet
-
   const flockBalanceKraken = await balanceOf(wallet_kraken, CONTRACT_FLOCK);
 
   // Get quote for swapping $FLOCK to $WETH

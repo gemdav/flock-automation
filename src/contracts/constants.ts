@@ -8,4 +8,4 @@ export const ERC20_ABI = [
   "function transfer(address to, uint256 amount) returns (bool)",
 ];
 
-export const PROVIDER_BASE = new JsonRpcProvider("https://mainnet.base.org");
+export const PROVIDER_BASE = new JsonRpcProvider("https://base.drpc.org");

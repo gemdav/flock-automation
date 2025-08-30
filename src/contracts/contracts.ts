@@ -40,7 +40,7 @@ export const CONTRACT_GMFLOCK_EXCHANGE: ContractConfig = {
 };
 
 export const CONTRACT_FLOCK_DELEGATE: ContractConfig = {
-  address: "0x9fa8108292784f960cdb8abdb65198ea000e3f34",
+  address: "0x9fa8108292784f960cdb8abdb65198ea000e3f34", // Kooltek contract address
   decimals: 18,
   abi: ["function claimRewards()", "function delegate(uint256 amount)"],
 };
