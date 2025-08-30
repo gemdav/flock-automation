@@ -50,6 +50,7 @@ export async function executeTx(
   }
 
   console.log(nonce);
+  console.log(wallet);
   console.log(txWithNonce);
 
   const tx = await wallet.sendTransaction(txWithNonce);
