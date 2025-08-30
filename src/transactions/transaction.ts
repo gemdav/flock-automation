@@ -49,6 +49,9 @@ export async function executeTx(
     return `[DRY-RUN] Estimated gas: ${gasEstimate.toString()}`;
   }
 
+  console.log(nonce);
+  console.log(txWithNonce);
+
   const tx = await wallet.sendTransaction(txWithNonce);
   await tx.wait();
   return tx.hash;
