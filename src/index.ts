@@ -43,6 +43,13 @@ const PROCEDURE = {
  * Main function
  */
 async function main() {
+  //TODO: delete me
+  console.log(wallet_kraken);
+  console.log(wallet_metamask);
+  console.log(process.env.ADDRESS_KRAKEN);
+  console.log(CONTRACT_FLOCK_DELEGATE);
+  //TODO: delete me
+
   // Claim $FLOCK rewards and collect them in Kraken wallet
   await claimAndTransfer();
 
