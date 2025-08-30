@@ -24,13 +24,13 @@ import { formatUnits } from "ethers";
 import { unwrap } from "./transactions/weth/unwrap.ts";
 import inquirer from "inquirer";
 
-const wallet_metamask = createWalletFromSRP(process.env.SRP_METAMASK!);
-const wallet_kraken = createWalletFromSRP(process.env.SRP_KRAKEN!);
-const address_kraken = process.env.ADDRESS_KRAKEN!;
+const WALLET_METAMASK = createWalletFromSRP(process.env.SRP_METAMASK!);
+const WALLET_KRAKEN = createWalletFromSRP(process.env.SRP_KRAKEN!);
+const ADDRESS_KRAKEN = process.env.ADDRESS_KRAKEN!;
 
-const DRY_RUN = false;
+const DRY_RUN = process.env.DRY_RUN === "true";
 
-const FLOCK_ETH_THRESOLD = 0.00005;
+const FLOCK_ETH_THRESOLD = Number(process.env.FLOCK_ETH_THRESOLD!) || 1;
 
 type ProcedureChoice = (typeof PROCEDURE)[keyof typeof PROCEDURE];
 const PROCEDURE = {
@@ -151,8 +151,8 @@ async function claimAndTransfer() {
 
   // Claim $FLOCK rewards for both wallets in parallel
   const [claimTxKraken, claimTxMetaMask] = await Promise.all([
-    claimRewards(wallet_kraken, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
-    claimRewards(wallet_metamask, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
+    claimRewards(WALLET_KRAKEN, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
+    claimRewards(WALLET_METAMASK, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
   ]);
   log(`Claim tx (Kraken): ${claimTxKraken}`);
   log(`Claim tx (MetaMask): ${claimTxMetaMask}`);
@@ -160,8 +160,8 @@ async function claimAndTransfer() {
   // Fetch $FLOCK balances for both wallets
   await sleep(5000);
   const [flockBalanceKraken, flockBalanceMetaMask] = await Promise.all([
-    balanceOf(wallet_kraken, CONTRACT_FLOCK),
-    balanceOf(wallet_metamask, CONTRACT_FLOCK),
+    balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK),
+    balanceOf(WALLET_METAMASK, CONTRACT_FLOCK),
   ]);
   log(
     `$FLOCK balance (Kraken): ${formatUnits(
@@ -178,9 +178,9 @@ async function claimAndTransfer() {
 
   // Transfer $FLOCK to Kraken wallet
   const transferTx = await transferERC20Token(
-    wallet_metamask,
+    WALLET_METAMASK,
     CONTRACT_FLOCK,
-    address_kraken,
+    ADDRESS_KRAKEN,
     flockBalanceMetaMask,
     DRY_RUN
   );
@@ -189,7 +189,7 @@ async function claimAndTransfer() {
   // Get updated $FLOCK balance in Kraken wallet
   await sleep(5000);
   const flockBalanceKrakenCombined = await balanceOf(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_FLOCK
   );
   log(
@@ -207,7 +207,7 @@ async function claimAndTransfer() {
  */
 async function sellFlock() {
   // Get $FLOCK balance in Kraken wallet
-  const flockBalanceKraken = await balanceOf(wallet_kraken, CONTRACT_FLOCK);
+  const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
   // Get quote for swapping $FLOCK to $WETH
   let quote = await getQuote(CONTRACT_FLOCK, CONTRACT_WETH);
@@ -218,7 +218,7 @@ async function sellFlock() {
 
   // Approve Uniswap V3 Router to spend $FLOCK
   const approveSwapFlockForEthTx = await approve(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_FLOCK,
     CONTRACT_UNISWAP_V3_ROUTER.address,
     flockBalanceKraken,
@@ -229,7 +229,7 @@ async function sellFlock() {
   // Swap $FLOCK for $WETH using Uniswap V3
   await sleep(5000);
   const swapFlockForEthTx = await swapExactInputSingle(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_FLOCK,
     CONTRACT_WETH,
     quote,
@@ -239,11 +239,11 @@ async function sellFlock() {
 
   // Get $WETH balance in Kraken wallet
   await sleep(5000);
-  const wethBalanceKraken = await balanceOf(wallet_kraken, CONTRACT_WETH);
+  const wethBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_WETH);
 
   // Approve Uniswap V3 Router to unwrap $WETH
   const approveUnwrapWETHTx = await approve(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_WETH,
     CONTRACT_UNISWAP_V3_ROUTER.address,
     wethBalanceKraken,
@@ -253,7 +253,7 @@ async function sellFlock() {
 
   // Unwrap $WETH to $ETH using Uniswap V3
   await sleep(5000);
-  const unwrapWETHTx = await unwrap(wallet_kraken, wethBalanceKraken);
+  const unwrapWETHTx = await unwrap(WALLET_KRAKEN, wethBalanceKraken);
   log(`Unwrap $WETH tx: ${unwrapWETHTx}`);
 }
 
@@ -262,11 +262,11 @@ async function sellFlock() {
  */
 async function exchangeAndDelegate() {
   // Get $FLOCK balance in Kraken wallet
-  const flockBalanceKraken = await balanceOf(wallet_kraken, CONTRACT_FLOCK);
+  const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
   // Approve $FLOCK for exchange
   const approveExchangeTx = await approve(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_FLOCK,
     CONTRACT_GMFLOCK_EXCHANGE.address,
     flockBalanceKraken,
@@ -277,7 +277,7 @@ async function exchangeAndDelegate() {
   // Exchange $FLOCK for $gmFLOCK
   await sleep(5000);
   const exchangeTx = await exchangeFlock(
-    wallet_kraken,
+    WALLET_KRAKEN,
     flockBalanceKraken,
     DRY_RUN
   );
@@ -285,7 +285,7 @@ async function exchangeAndDelegate() {
 
   // Get $gmFLOCK balance in Kraken wallet
   await sleep(5000);
-  const gmFlockBalanceKraken = await balanceOf(wallet_kraken, CONTRACT_GMFLOCK);
+  const gmFlockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_GMFLOCK);
   log(
     `$gmFLOCK balance (Kraken): ${formatUnits(
       gmFlockBalanceKraken,
@@ -295,7 +295,7 @@ async function exchangeAndDelegate() {
 
   // Approve $gmFLOCK for delegation
   const approveDelegateTx = await approve(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_GMFLOCK,
     CONTRACT_FLOCK_DELEGATE.address,
     gmFlockBalanceKraken,
@@ -306,7 +306,7 @@ async function exchangeAndDelegate() {
   // Delegate $gmFLOCK to earn rewards
   await sleep(5000);
   const delegateTx = await delegate(
-    wallet_kraken,
+    WALLET_KRAKEN,
     CONTRACT_FLOCK_DELEGATE,
     gmFlockBalanceKraken,
     DRY_RUN

@@ -2,8 +2,8 @@ name: Run Automation Script
 
 on:
   schedule:
-    - cron: "0 0,6,12,18 * * *"  # Runs every 6 hours
-    
+    - cron: "0 0,6,12,18 * * *" # Runs every 6 hours
+
   workflow_dispatch:
 
 jobs:
@@ -30,3 +30,5 @@ jobs:
           SRP_METAMASK: ${{ secrets.SRP_METAMASK }}
           SRP_KRAKEN: ${{ secrets.SRP_KRAKEN }}
           ADDRESS_KRAKEN: ${{ secrets.ADDRESS_KRAKEN }}
+          DRY_RUN: ${{ vars.DRY_RUN }}
+          FLOCK_ETH_THRESOLD: ${{ vars.FLOCK_ETH_THRESOLD }}
