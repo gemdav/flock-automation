@@ -3,7 +3,7 @@ name: Run Automation Script
 on:
   schedule:
     - cron: "0 9,21 * * *"  # Runs every day at 09:00 and 21:00
-    - cron: "15 7 * * *"    # Runs every day at 07:05 UTC
+    - cron: "55 7 * * *"    # Runs every day at 07:05 UTC
     
   workflow_dispatch:
 
@@ -29,5 +29,5 @@ jobs:
         run: npm run dev -- --threshold
         env:
           SRP_METAMASK: ${{ secrets.SRP_METAMASK }}
-          SRP_KRAKEN: ${{ secrets.SRP_METAMASK }}
-          ADDRESS_KRAKEN: ${{ secrets.SRP_METAMASK }}
+          SRP_KRAKEN: ${{ secrets.SRP_KRAKEN }}
+          ADDRESS_KRAKEN: ${{ secrets.ADDRESS_KRAKEN }}
