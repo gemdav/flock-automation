@@ -29,5 +29,5 @@ jobs:
         run: npm run dev -- --threshold
         env:
           SRP_METAMASK: ${{ secrets.SRP_METAMASK }}
-          SRP_KRAKEN: ${{ secrets.SRP_METAMASK }}
-          ADDRESS_KRAKEN: ${{ secrets.SRP_METAMASK }}
+          SRP_KRAKEN: ${{ secrets.SRP_KRAKEN }}
+          ADDRESS_KRAKEN: ${{ secrets.ADDRESS_KRAKEN }}
