@@ -46,7 +46,6 @@ async function main() {
   // Claim $FLOCK rewards and collect them in Kraken wallet
   await claimAndTransfer();
 
-  await sleep(5000);
   let choice: ProcedureChoice;
   const args = process.argv.slice(2);
   if (args.includes("--delegate")) {
@@ -62,6 +61,7 @@ async function main() {
       flockEth > FLOCK_ETH_THRESOLD ? PROCEDURE.SELL : PROCEDURE.DELEGATE;
   } else {
     // Get quotes
+    await sleep(5000);
     await getRelevantQuotes();
     choice = await promptProcedure();
   }
@@ -210,6 +210,7 @@ async function sellFlock() {
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
   // Get quote for swapping $FLOCK to $WETH
+  await sleep(5000);
   let quote = await getQuote(CONTRACT_FLOCK, CONTRACT_WETH);
   if (!quote) {
     log("No $FLOCK => $WETH quote available. Stopping the program.");
