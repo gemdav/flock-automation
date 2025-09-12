@@ -206,6 +206,8 @@ async function claimAndTransfer() {
  * @param quote - Quote object containing fee and rate for the swap
  */
 async function sellFlock() {
+  await sleep(5000);
+  
   // Get $FLOCK balance in Kraken wallet
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
