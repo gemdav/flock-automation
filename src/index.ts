@@ -210,7 +210,6 @@ async function sellFlock() {
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
   // Get quote for swapping $FLOCK to $WETH
-  await sleep(5000);
   let quote = await getQuote(CONTRACT_FLOCK, CONTRACT_WETH);
   if (!quote) {
     log("No $FLOCK => $WETH quote available. Stopping the program.");
