@@ -72,17 +72,11 @@ async function main() {
   switch (choice) {
     case PROCEDURE.DELEGATE:
       // Exchange $FLOCK for $gmFLOCK and delegate it
-      log("----------------------------------------------------------------");
-      log("### Exchange $FLOCK for $gmFLOCK and delegate it ###");
-      log("----------------------------------------------------------------");
       await exchangeAndDelegate();
       break;
 
     case PROCEDURE.SELL:
       // Sell $FLOCK if threshold rate is met
-      log("----------------------------------------------------------------");
-      log("### Sell $FLOCK for $ETH ###");
-      log("----------------------------------------------------------------");
       await sellFlock();
       break;
 
@@ -129,6 +123,7 @@ async function getRelevantQuotes() {
   log("----------------------------------------------------------------");
   log("### Get $FLOCK quotes ###");
   log("----------------------------------------------------------------");
+
   const [flockEth, ethEur, ethUsd] = await Promise.all([
     getQuote(CONTRACT_FLOCK, CONTRACT_WETH),
     getQuote(CONTRACT_WETH, CONTRACT_EURC),
@@ -209,6 +204,10 @@ async function claimAndTransfer() {
  * @param quote - Quote object containing fee and rate for the swap
  */
 async function sellFlock() {
+  log("----------------------------------------------------------------");
+  log("### Sell $FLOCK for $ETH ###");
+  log("----------------------------------------------------------------");
+
   // Get $FLOCK balance in Kraken wallet
   await sleep(5000);
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
@@ -265,6 +264,10 @@ async function sellFlock() {
  * Exchanges $FLOCK for $gmFLOCK and delegates it (Stake to Earn).
  */
 async function exchangeAndDelegate() {
+  log("----------------------------------------------------------------");
+  log("### Exchange $FLOCK for $gmFLOCK and delegate it ###");
+  log("----------------------------------------------------------------");
+
   // Get $FLOCK balance in Kraken wallet
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
