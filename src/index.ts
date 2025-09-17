@@ -210,6 +210,7 @@ async function claimAndTransfer() {
  */
 async function sellFlock() {
   // Get $FLOCK balance in Kraken wallet
+  await sleep(5000);
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
   // Get quote for swapping $FLOCK to $WETH
