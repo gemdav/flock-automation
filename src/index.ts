@@ -8,7 +8,8 @@ import { exchangeFlock } from "./transactions/flock/exchangeFlock.ts";
 import {
   CONTRACT_EURC,
   CONTRACT_FLOCK,
-  CONTRACT_FLOCK_DELEGATE,
+  CONTRACT_FLOCK_DELEGATE_JERRY,
+  CONTRACT_FLOCK_DELEGATE_KOOLTEK,
   CONTRACT_GMFLOCK,
   CONTRACT_GMFLOCK_EXCHANGE,
   CONTRACT_UNISWAP_V3_ROUTER,
@@ -27,6 +28,8 @@ import inquirer from "inquirer";
 const WALLET_METAMASK = createWalletFromSRP(process.env.SRP_METAMASK!);
 const WALLET_KRAKEN = createWalletFromSRP(process.env.SRP_KRAKEN!);
 const ADDRESS_KRAKEN = process.env.ADDRESS_KRAKEN!;
+
+const CONTRACT_FLOCK_DELEGATE = CONTRACT_FLOCK_DELEGATE_JERRY;
 
 const DRY_RUN = process.env.DRY_RUN === "true";
 
