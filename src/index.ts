@@ -64,7 +64,7 @@ async function main() {
       flockEth > FLOCK_ETH_THRESOLD ? PROCEDURE.SELL : PROCEDURE.DELEGATE;
   } else {
     // Get quotes
-    await sleep(5000);
+    await sleep(10000);
     await getRelevantQuotes();
     choice = await promptProcedure();
   }
