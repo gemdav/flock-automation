@@ -2,6 +2,8 @@ import { ethers, formatUnits, JsonRpcProvider, parseUnits } from "ethers";
 import { ContractConfig } from "../../types/contractConfig.ts";
 import { CONTRACT_UNISWAP_V3_QUOTER } from "../../contracts/contracts.ts";
 import { UniswapQuote } from "../../types/uniswapQuote.ts";
+import { log } from "../../utils/logger.ts";
+import { sleep } from "../../utils/utils.ts";
 
 const PROVIDER_BASE = new JsonRpcProvider("https://mainnet.base.org");
 
@@ -23,7 +25,9 @@ export async function getQuote(
   const feeTiers: number[] = [100, 500, 3000, 10000];
   let bestQuote: UniswapQuote | null = null;
 
-  for (const fee of feeTiers) {
+  let i = 0;
+  while (i < feeTiers.length) {
+    const fee = feeTiers[i];
     try {
       const [amountOut] = await quoter.quoteExactInputSingle.staticCall({
         tokenIn: tokenIn.address,
@@ -39,8 +43,16 @@ export async function getQuote(
         const rate = normalizedOut / normalizedIn;
         bestQuote = { fee, amountOut, rate };
       }
-    } catch (e) {
-      // ignore errors (e.g., no pool for this fee tier)
+      i++;
+    } catch (e: any) {
+      if (e.info?.error?.message.includes("over rate limit")) {
+        // retry if failure is due to rate limiting
+        log("Rate limit hit, retrying after 5s cooldown ...");
+        await sleep(5000);
+      } else {
+        // ignore all other errors (e.g., no pool for this fee tier)
+        i++;
+      }
     }
   }
   return bestQuote;

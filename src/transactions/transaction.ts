@@ -1,5 +1,7 @@
 import { HDNodeWallet, TransactionRequest } from "ethers";
-import { TxResult } from "../types/txResult";
+import { TxResult } from "../types/txResult.ts";
+import { log } from "../utils/logger.ts";
+import { sleep } from "../utils/utils.ts";
 
 const nonceCache = new Map<string, number>();
 
@@ -49,7 +51,18 @@ export async function executeTx(
     };
   }
 
-  const tx = await wallet.sendTransaction(txWithNonce);
-  const receipt = await tx.wait();
-  return { tx, receipt, message: tx.hash };
+  try {
+    const tx = await wallet.sendTransaction(txWithNonce);
+    const receipt = await tx.wait();
+    return { tx, receipt, message: tx.hash };
+  } catch (e: any) {
+    if (e.info?.error?.message.includes("over rate limit")) {
+      // retry if failure is due to rate limiting
+      log("Rate limit hit, retrying after 5s cooldown ...");
+      await sleep(5000);
+      return executeTx(wallet, txDetails, dryRun);
+    }
+    // throw all other errors
+    throw e;
+  }
 }

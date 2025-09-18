@@ -2,6 +2,7 @@ import { HDNodeWallet, Contract, ContractMethodArgs } from "ethers";
 import { ContractConfig } from "../../types/contractConfig.ts";
 import { ERC20_ABI } from "../../contracts/constants.ts";
 import { sleep } from "../../utils/utils.ts";
+import { log } from "../../utils/logger.ts";
 
 /**
  * Gets the ERC-20 token balance of the wallet.
@@ -25,8 +26,18 @@ export async function balanceOf(
     }
   }
 
-  const balance = await contract.balanceOf(wallet.address, {
-    blockTag: blockNumber,
-  });
-  return balance;
+  try {
+    return contract.balanceOf(wallet.address, {
+      blockTag: blockNumber,
+    });
+  } catch (e: any) {
+    if (e.info?.error?.message.includes("over rate limit")) {
+      // retry if failure is due to rate limiting
+      log("Rate limit hit, retrying after 5s cooldown ...");
+      await sleep(5000);
+      return balanceOf(wallet, contractConfig, blockNumber);
+    }
+    // throw all other errors
+    throw e;
+  }
 }
