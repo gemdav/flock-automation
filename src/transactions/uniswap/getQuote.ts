@@ -2,7 +2,6 @@ import { ethers, formatUnits, JsonRpcProvider, parseUnits } from "ethers";
 import { ContractConfig } from "../../types/contractConfig.ts";
 import { CONTRACT_UNISWAP_V3_QUOTER } from "../../contracts/contracts.ts";
 import { UniswapQuote } from "../../types/uniswapQuote.ts";
-import { sleep } from "../../utils/utils.ts";
 
 const PROVIDER_BASE = new JsonRpcProvider("https://mainnet.base.org");
 
@@ -19,11 +18,7 @@ export async function getQuote(
   tokenOut: ContractConfig,
   amountIn: bigint = parseUnits("1", tokenIn.decimals)
 ): Promise<UniswapQuote | null> {
-  const quoter = new ethers.Contract(
-    CONTRACT_UNISWAP_V3_QUOTER.address,
-    CONTRACT_UNISWAP_V3_QUOTER.abi,
-    PROVIDER_BASE
-  );
+  const quoter = new ethers.Contract(CONTRACT_UNISWAP_V3_QUOTER.address, CONTRACT_UNISWAP_V3_QUOTER.abi, PROVIDER_BASE);
 
   const feeTiers: number[] = [100, 500, 3000, 10000];
   let bestQuote: UniswapQuote | null = null;
@@ -37,8 +32,6 @@ export async function getQuote(
         amountIn,
         sqrtPriceLimitX96: 0n,
       });
-
-      await sleep(5000); // To avoid rate limiting
 
       if (amountOut > 0n && (!bestQuote || amountOut > bestQuote.amountOut)) {
         const normalizedIn = Number(formatUnits(amountIn, tokenIn.decimals));

@@ -1,4 +1,5 @@
 import { HDNodeWallet, TransactionRequest } from "ethers";
+import { TxResult } from "../types/txResult";
 
 const nonceCache = new Map<string, number>();
 
@@ -12,10 +13,7 @@ async function getNextNonce(wallet: HDNodeWallet): Promise<number> {
   const address = wallet.address.toLowerCase();
 
   if (!nonceCache.has(address)) {
-    const nonce = await wallet.provider!.getTransactionCount(
-      address,
-      "pending"
-    );
+    const nonce = await wallet.provider!.getTransactionCount(address, "pending");
     nonceCache.set(address, nonce);
   } else {
     nonceCache.set(address, (nonceCache.get(address) ?? 0) + 1);
@@ -30,14 +28,14 @@ async function getNextNonce(wallet: HDNodeWallet): Promise<number> {
  * @param {HDNodeWallet} wallet - Sending wallet
  * @param {object} txDetails - Transaction details (to, value, data)
  * @param {boolean} dryRun - If true, only estimate gas without sending
- * @returns {Promise<string>} Transaction hash if sent, or gas estimate if dry-run
+ * @returns {Promise<TxResult>} Transaction hash if sent, or gas estimate if dry-run
  */
 export async function executeTx(
   wallet: HDNodeWallet,
   txDetails: TransactionRequest,
   dryRun: boolean
-): Promise<string> {
-  // Fetch the next nonce for this wallet and attach the nonce to the transaction
+): Promise<TxResult> {
+  // fetch the next nonce for this wallet and attach the nonce to the transaction
   const nonce = await getNextNonce(wallet);
   const txWithNonce: TransactionRequest = {
     ...txDetails,
@@ -46,10 +44,12 @@ export async function executeTx(
 
   if (dryRun) {
     const gasEstimate = await wallet.estimateGas(txWithNonce);
-    return `[DRY-RUN] Estimated gas: ${gasEstimate.toString()}`;
+    return {
+      message: `[DRY-RUN] Estimated gas: ${gasEstimate.toString()}`,
+    };
   }
 
   const tx = await wallet.sendTransaction(txWithNonce);
-  await tx.wait();
-  return tx.hash;
+  const receipt = await tx.wait();
+  return { tx, receipt, message: tx.hash };
 }

@@ -8,10 +8,7 @@ import { NETWORKS } from "../config/network.js";
  * @returns {HDNodeWallet} Connected Ethers.js wallet
  * @throws {Error} If the SRP is invalid or the network configuration is missing
  */
-export function createWalletFromSRP(
-  srp: string,
-  network: keyof typeof NETWORKS = "base"
-): HDNodeWallet {
+export function createWalletFromSRP(srp: string, network: keyof typeof NETWORKS = "base"): HDNodeWallet {
   if (!NETWORKS[network]) {
     throw new Error(`Network '${network}' is not configured.`);
   }

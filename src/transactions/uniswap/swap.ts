@@ -3,6 +3,8 @@ import { executeTx } from "../transaction.ts";
 import { CONTRACT_UNISWAP_V3_ROUTER } from "../../contracts/contracts.ts";
 import { ContractConfig } from "../../types/contractConfig.ts";
 import { UniswapQuote } from "../../types/uniswapQuote.ts";
+import { TxResult } from "../../types/txResult.ts";
+import { sleep } from "../../utils/utils.ts";
 
 /**
  * Swaps `amountIn` of `tokenIn` for `tokenOut` using Uniswap V3.
@@ -14,7 +16,7 @@ import { UniswapQuote } from "../../types/uniswapQuote.ts";
  * @param {bigint} amountIn - Amount of input token to swap.
  * @param {number} [slippageBps=50] - Allowed slippage in basis points (50 = 0.5%).
  * @param {boolean} [dryRun=false] - If true, returns gas estimate without sending.
- * @returns {Promise<string>} - Transaction hash if sent.
+ * @returns {Promise<TxResult>} - Transaction hash if sent.
  */
 export async function swapExactInputSingle(
   wallet: HDNodeWallet,
@@ -24,20 +26,21 @@ export async function swapExactInputSingle(
   amountIn: bigint,
   slippageBps: number = 50,
   dryRun: boolean = false
-): Promise<string> {
-  const router = new Contract(
-    CONTRACT_UNISWAP_V3_ROUTER.address,
-    CONTRACT_UNISWAP_V3_ROUTER.abi,
-    wallet
-  );
+): Promise<TxResult> {
+  const router = new Contract(CONTRACT_UNISWAP_V3_ROUTER.address, CONTRACT_UNISWAP_V3_ROUTER.abi, wallet);
+
+  // await allowannce
+  while (true) {
+    const contractTokenIn = new Contract(tokenIn.address, tokenIn.abi, wallet);
+    const allowance = await contractTokenIn.allowance(wallet.address, CONTRACT_UNISWAP_V3_ROUTER.address);
+    if (allowance >= amountIn) break;
+    await sleep(500);
+  }
 
   // set minimum amount out based on slippage
-  const amountOutMinimum = parseUnits(
-    (quote.rate * (1 - slippageBps / 10_000)).toFixed(tokenOut.decimals),
-    tokenOut.decimals
-  );
+  const amountOutMinimum = (quote.amountOut * (10_000n - BigInt(slippageBps))) / 10_000n;
 
-  // Build params for Uniswap V3 router
+  // build transaction data
   const txDetails: TransactionRequest = {
     to: CONTRACT_UNISWAP_V3_ROUTER.address,
     from: wallet.address,

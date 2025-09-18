@@ -34,9 +34,7 @@ export const CONTRACT_GMFLOCK: ContractConfig = {
 export const CONTRACT_GMFLOCK_EXCHANGE: ContractConfig = {
   address: "0xe1fa4592b7a35ff6cef65fdec5e13a1f48fc6123",
   decimals: 18,
-  abi: [
-    "function exchangeFlock(uint256 flockAmount, uint256 lockPeriod, address beneficiary)",
-  ],
+  abi: ["function exchangeFlock(uint256 flockAmount, uint256 lockPeriod, address beneficiary)"],
 };
 
 export const CONTRACT_FLOCK_DELEGATE_KOOLTEK: ContractConfig = {

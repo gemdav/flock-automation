@@ -60,13 +60,27 @@ async function main() {
   } else if (args.includes("--threshold")) {
     let flockEth = (await getQuote(CONTRACT_FLOCK, CONTRACT_WETH))?.rate || 0;
     log(`Threshold: ${FLOCK_ETH_THRESOLD}, current rate: ${flockEth}`);
-    choice =
-      flockEth > FLOCK_ETH_THRESOLD ? PROCEDURE.SELL : PROCEDURE.DELEGATE;
+    choice = flockEth > FLOCK_ETH_THRESOLD ? PROCEDURE.SELL : PROCEDURE.DELEGATE;
   } else {
     // Get quotes
-    await sleep(10000);
     await getRelevantQuotes();
-    choice = await promptProcedure();
+    choice = (
+      await inquirer.prompt([
+        {
+          type: "list",
+          name: "choice",
+          message: "How to proceed with the claimed $FLOCK:",
+          choices: [
+            {
+              name: "Exchange for $gmFLOCK and delegate",
+              value: { id: PROCEDURE.DELEGATE },
+            },
+            { name: "Sell for $ETH", value: { id: PROCEDURE.SELL } },
+            { name: "Stop program", value: { id: PROCEDURE.STOP } },
+          ],
+        },
+      ])
+    ).choice.id;
   }
 
   switch (choice) {
@@ -90,30 +104,6 @@ async function main() {
       log("Invalid choice. Stopping the program.");
       return;
   }
-}
-
-/**
- * Get the procedure using a user prompt
- *
- * @returns the procedure
- */
-async function promptProcedure(): Promise<ProcedureChoice> {
-  const procedure = await inquirer.prompt([
-    {
-      type: "list",
-      name: "choice",
-      message: "How to proceed with the claimed $FLOCK:",
-      choices: [
-        {
-          name: "Exchange for $gmFLOCK and delegate",
-          value: { id: PROCEDURE.DELEGATE },
-        },
-        { name: "Sell for $ETH", value: { id: PROCEDURE.SELL } },
-        { name: "Stop program", value: { id: PROCEDURE.STOP } },
-      ],
-    },
-  ]);
-  return procedure.choice.id;
 }
 
 /**
@@ -152,27 +142,16 @@ async function claimAndTransfer() {
     claimRewards(WALLET_KRAKEN, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
     claimRewards(WALLET_METAMASK, CONTRACT_FLOCK_DELEGATE, DRY_RUN),
   ]);
-  log(`Claim tx (Kraken): ${claimTxKraken}`);
-  log(`Claim tx (MetaMask): ${claimTxMetaMask}`);
+  log(`Claim tx (Kraken): ${claimTxKraken.message}`);
+  log(`Claim tx (MetaMask): ${claimTxMetaMask.message}`);
 
   // Fetch $FLOCK balances for both wallets
-  await sleep(5000);
   const [flockBalanceKraken, flockBalanceMetaMask] = await Promise.all([
-    balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK),
-    balanceOf(WALLET_METAMASK, CONTRACT_FLOCK),
+    balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK, claimTxKraken.receipt?.blockNumber),
+    balanceOf(WALLET_METAMASK, CONTRACT_FLOCK, claimTxMetaMask.receipt?.blockNumber),
   ]);
-  log(
-    `$FLOCK balance (Kraken): ${formatUnits(
-      flockBalanceKraken,
-      CONTRACT_FLOCK.decimals
-    )}`
-  );
-  log(
-    `$FLOCK balance (MetaMask): ${formatUnits(
-      flockBalanceMetaMask,
-      CONTRACT_FLOCK.decimals
-    )}`
-  );
+  log(`$FLOCK balance (Kraken): ${formatUnits(flockBalanceKraken, CONTRACT_FLOCK.decimals)}`);
+  log(`$FLOCK balance (MetaMask): ${formatUnits(flockBalanceMetaMask, CONTRACT_FLOCK.decimals)}`);
 
   // Transfer $FLOCK to Kraken wallet
   const transferTx = await transferERC20Token(
@@ -182,20 +161,11 @@ async function claimAndTransfer() {
     flockBalanceMetaMask,
     DRY_RUN
   );
-  log(`Successfully transferred - transfer tx: ${transferTx}`);
+  log(`Successfully transferred - transfer tx: ${transferTx.message}`);
 
   // Get updated $FLOCK balance in Kraken wallet
-  await sleep(5000);
-  const flockBalanceKrakenCombined = await balanceOf(
-    WALLET_KRAKEN,
-    CONTRACT_FLOCK
-  );
-  log(
-    `$FLOCK balance (Kraken): ${formatUnits(
-      flockBalanceKrakenCombined,
-      CONTRACT_FLOCK.decimals
-    )}`
-  );
+  const flockBalanceKrakenCombined = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK, transferTx.receipt?.blockNumber);
+  log(`$FLOCK balance (Kraken): ${formatUnits(flockBalanceKrakenCombined, CONTRACT_FLOCK.decimals)}`);
 }
 
 /**
@@ -209,11 +179,10 @@ async function sellFlock() {
   log("----------------------------------------------------------------");
 
   // Get $FLOCK balance in Kraken wallet
-  await sleep(5000);
   const flockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_FLOCK);
 
   // Get quote for swapping $FLOCK to $WETH
-  let quote = await getQuote(CONTRACT_FLOCK, CONTRACT_WETH);
+  let quote = await getQuote(CONTRACT_FLOCK, CONTRACT_WETH, flockBalanceKraken);
   if (!quote) {
     log("No $FLOCK => $WETH quote available. Stopping the program.");
     return;
@@ -227,10 +196,9 @@ async function sellFlock() {
     flockBalanceKraken,
     DRY_RUN
   );
-  log(`Approve swap $FLOCK => $WETH tx: ${approveSwapFlockForEthTx}`);
+  log(`Approve swap $FLOCK => $WETH tx: ${approveSwapFlockForEthTx.message}`);
 
   // Swap $FLOCK for $WETH using Uniswap V3
-  await sleep(5000);
   const swapFlockForEthTx = await swapExactInputSingle(
     WALLET_KRAKEN,
     CONTRACT_FLOCK,
@@ -238,26 +206,14 @@ async function sellFlock() {
     quote,
     flockBalanceKraken
   );
-  log(`Swap $FLOCK => $WETH tx: ${swapFlockForEthTx}`);
+  log(`Swap $FLOCK => $WETH tx: ${swapFlockForEthTx.message}`);
 
   // Get $WETH balance in Kraken wallet
-  await sleep(5000);
-  const wethBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_WETH);
-
-  // Approve Uniswap V3 Router to unwrap $WETH
-  const approveUnwrapWETHTx = await approve(
-    WALLET_KRAKEN,
-    CONTRACT_WETH,
-    CONTRACT_UNISWAP_V3_ROUTER.address,
-    wethBalanceKraken,
-    DRY_RUN
-  );
-  log(`Approve unwrap $WETH tx: ${approveUnwrapWETHTx}`);
+  const wethBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_WETH, swapFlockForEthTx.receipt?.blockNumber);
 
   // Unwrap $WETH to $ETH using Uniswap V3
-  await sleep(5000);
   const unwrapWETHTx = await unwrap(WALLET_KRAKEN, wethBalanceKraken);
-  log(`Unwrap $WETH tx: ${unwrapWETHTx}`);
+  log(`Unwrap $WETH tx: ${unwrapWETHTx.message}`);
 }
 
 /**
@@ -279,26 +235,15 @@ async function exchangeAndDelegate() {
     flockBalanceKraken,
     DRY_RUN
   );
-  log(`Approve exchange tx: ${approveExchangeTx}`);
+  log(`Approve exchange tx: ${approveExchangeTx.message}`);
 
   // Exchange $FLOCK for $gmFLOCK
-  await sleep(5000);
-  const exchangeTx = await exchangeFlock(
-    WALLET_KRAKEN,
-    flockBalanceKraken,
-    DRY_RUN
-  );
-  log(`Exchange tx: ${exchangeTx}`);
+  const exchangeTx = await exchangeFlock(WALLET_KRAKEN, flockBalanceKraken, DRY_RUN);
+  log(`Exchange tx: ${exchangeTx.message}`);
 
   // Get $gmFLOCK balance in Kraken wallet
-  await sleep(5000);
   const gmFlockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_GMFLOCK);
-  log(
-    `$gmFLOCK balance (Kraken): ${formatUnits(
-      gmFlockBalanceKraken,
-      CONTRACT_GMFLOCK.decimals
-    )}`
-  );
+  log(`$gmFLOCK balance (Kraken): ${formatUnits(gmFlockBalanceKraken, CONTRACT_GMFLOCK.decimals)}`);
 
   // Approve $gmFLOCK for delegation
   const approveDelegateTx = await approve(
@@ -308,17 +253,17 @@ async function exchangeAndDelegate() {
     gmFlockBalanceKraken,
     DRY_RUN
   );
-  log(`Approve delegate tx: ${approveDelegateTx}`);
+  log(`Approve delegate tx: ${approveDelegateTx.message}`);
 
   // Delegate $gmFLOCK to earn rewards
-  await sleep(5000);
   const delegateTx = await delegate(
     WALLET_KRAKEN,
     CONTRACT_FLOCK_DELEGATE,
+    CONTRACT_GMFLOCK,
     gmFlockBalanceKraken,
     DRY_RUN
   );
-  log(`Delegate tx: ${delegateTx}`);
+  log(`Delegate tx: ${delegateTx.message}`);
 }
 
 main().catch(err);

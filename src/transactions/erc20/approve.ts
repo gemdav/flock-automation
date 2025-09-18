@@ -1,6 +1,7 @@
 import { Contract, HDNodeWallet } from "ethers";
 import { ContractConfig } from "../../types/contractConfig.ts";
 import { executeTx } from "../transaction.ts";
+import { TxResult } from "../../types/txResult.ts";
 
 /**
  * Approves a spender to spend tokens on behalf of the wallet.
@@ -10,7 +11,7 @@ import { executeTx } from "../transaction.ts";
  * @param {string} spender - Address allowed to spend tokens.
  * @param {bigint} amount - Amount of tokens to approve.
  * @param {boolean} [dryRun=false] - If true, returns gas estimate without sending.
- * @returns {Promise<string>} - Transaction hash if sent.
+ * @returns {Promise<TxResult>} - Transaction hash if sent.
  */
 export async function approve(
   wallet: HDNodeWallet,
@@ -18,14 +19,10 @@ export async function approve(
   spender: string,
   amount: bigint,
   dryRun: boolean = false
-): Promise<string> {
-  const contract = new Contract(
-    contractConfig.address,
-    contractConfig.abi,
-    wallet
-  );
+): Promise<TxResult> {
+  const contract = new Contract(contractConfig.address, contractConfig.abi, wallet);
 
-  // Encode function call
+  // build transaction data
   const txDetails = {
     to: contractConfig.address,
     data: contract.interface.encodeFunctionData("approve", [spender, amount]),

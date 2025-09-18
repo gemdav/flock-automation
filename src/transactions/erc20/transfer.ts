@@ -1,6 +1,7 @@
 import { HDNodeWallet, Contract, parseUnits } from "ethers";
 import { executeTx } from "../transaction.ts";
 import { ContractConfig } from "../../types/contractConfig.ts";
+import { TxResult } from "../../types/txResult.ts";
 
 /**
  * Transfers ERC-20 tokens using a contract config.
@@ -10,7 +11,7 @@ import { ContractConfig } from "../../types/contractConfig.ts";
  * @param {string} to - Recipient address.
  * @param {bigint} amount - Amount of tokens to transfer.
  * @param {boolean} [dryRun=false] - If true, returns gas estimate without sending.
- * @returns {Promise<string>} - Transaction hash if sent.
+ * @returns {Promise<TxResult>} - Transaction hash if sent.
  */
 export async function transferERC20Token(
   wallet: HDNodeWallet,
@@ -18,15 +19,11 @@ export async function transferERC20Token(
   to: string,
   amount: bigint,
   dryRun: boolean = false
-): Promise<string> {
-  // Connect to ERC20 contract
-  const contract = new Contract(
-    contractConfig.address,
-    contractConfig.abi,
-    wallet
-  );
+): Promise<TxResult> {
+  // connect to ERC20 contract
+  const contract = new Contract(contractConfig.address, contractConfig.abi, wallet);
 
-  // Build transaction data
+  // build transaction data
   const txDetails = {
     to: contractConfig.address,
     data: contract.interface.encodeFunctionData("transfer", [to, amount]),

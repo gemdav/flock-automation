@@ -1,6 +1,8 @@
 import { HDNodeWallet, Contract } from "ethers";
 import { executeTx } from "../transaction.ts";
-import { CONTRACT_GMFLOCK_EXCHANGE } from "../../contracts/contracts.ts";
+import { CONTRACT_FLOCK, CONTRACT_GMFLOCK_EXCHANGE } from "../../contracts/contracts.ts";
+import { TxResult } from "../../types/txResult.ts";
+import { sleep } from "../../utils/utils.ts";
 
 /**
  * Exchanges tokens for FLock and stakes them for one year.
@@ -8,19 +10,20 @@ import { CONTRACT_GMFLOCK_EXCHANGE } from "../../contracts/contracts.ts";
  * @param {HDNodeWallet} wallet - Wallet to sign the transaction.
  * @param {bigint} amount - Amount of tokens to exchange.
  * @param {boolean} [dryRun=false] - If true, returns gas estimate without sending.
- * @returns {Promise<string>} - Transaction hash if sent.
+ * @returns {Promise<TxResult>} - Transaction hash if sent.
  */
-export async function exchangeFlock(
-  wallet: HDNodeWallet,
-  amount: bigint,
-  dryRun: boolean = false
-): Promise<string> {
-  const contract = new Contract(
-    CONTRACT_GMFLOCK_EXCHANGE.address,
-    CONTRACT_GMFLOCK_EXCHANGE.abi,
-    wallet
-  );
+export async function exchangeFlock(wallet: HDNodeWallet, amount: bigint, dryRun: boolean = false): Promise<TxResult> {
+  const contract = new Contract(CONTRACT_GMFLOCK_EXCHANGE.address, CONTRACT_GMFLOCK_EXCHANGE.abi, wallet);
 
+  // await allowannce
+  while (true) {
+    const contractFlock = new Contract(CONTRACT_FLOCK.address, CONTRACT_FLOCK.abi, wallet);
+    const allowance = await contractFlock.allowance(wallet.address, CONTRACT_GMFLOCK_EXCHANGE.address);
+    if (allowance >= amount) break;
+    await sleep(500);
+  }
+
+  // build transaction data
   const txDetails = {
     to: CONTRACT_GMFLOCK_EXCHANGE.address,
     data: contract.interface.encodeFunctionData("exchangeFlock", [
