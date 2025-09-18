@@ -28,7 +28,6 @@ export async function delegate(
     const contractToken = new Contract(tokenContract.address, tokenContract.abi, wallet);
     const allowance = await contractToken.allowance(wallet.address, delegationContract.address);
     if (allowance >= amount) break;
-    console.log("Waiting for allowance...");
     await sleep(500);
   }
 
