@@ -30,5 +30,6 @@ jobs:
           SRP_METAMASK: ${{ secrets.SRP_METAMASK }}
           SRP_KRAKEN: ${{ secrets.SRP_KRAKEN }}
           ADDRESS_KRAKEN: ${{ secrets.ADDRESS_KRAKEN }}
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           DRY_RUN: ${{ vars.DRY_RUN }}
           FLOCK_ETH_THRESOLD: ${{ vars.FLOCK_ETH_THRESOLD }}
