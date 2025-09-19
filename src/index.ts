@@ -238,7 +238,7 @@ async function exchangeAndDelegate() {
   log(`Exchange tx: ${exchangeTx.message}`);
 
   // Get $gmFLOCK balance in Kraken wallet
-  const gmFlockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_GMFLOCK);
+  const gmFlockBalanceKraken = await balanceOf(WALLET_KRAKEN, CONTRACT_GMFLOCK, exchangeTx.receipt?.blockNumber);
   log(`$gmFLOCK balance (Kraken): ${formatUnits(gmFlockBalanceKraken, CONTRACT_GMFLOCK.decimals)}`);
 
   // Approve $gmFLOCK for delegation
