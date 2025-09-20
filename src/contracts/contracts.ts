@@ -1,4 +1,4 @@
-import { ERC20_ABI } from "./constants.ts";
+import { BASE_DELEGATE_CONTRACT, ERC20_ABI } from "./constants.ts";
 import { ContractConfig } from "../types/contractConfig.ts";
 
 export const CONTRACT_EURC: ContractConfig = {
@@ -39,14 +39,17 @@ export const CONTRACT_GMFLOCK_EXCHANGE: ContractConfig = {
 
 export const CONTRACT_FLOCK_DELEGATE_KOOLTEK: ContractConfig = {
   address: "0x9fa8108292784f960cdb8abdb65198ea000e3f34",
-  decimals: 18,
-  abi: ["function claimRewards()", "function delegate(uint256 amount)"],
+  ...BASE_DELEGATE_CONTRACT,
 };
 
 export const CONTRACT_FLOCK_DELEGATE_JERRY: ContractConfig = {
   address: "0x0ff123e4cf73ea544a72e3d4696d78938567a709",
-  decimals: 18,
-  abi: ["function claimRewards()", "function delegate(uint256 amount)"],
+  ...BASE_DELEGATE_CONTRACT,
+};
+
+export const CONTRACT_FLOCK_DELEGATE_TOBENO1: ContractConfig = {
+  address: "0xad1e275359a7e5293faacec67b2417196df0616b",
+  ...BASE_DELEGATE_CONTRACT,
 };
 
 export const CONTRACT_UNISWAP_V3_QUOTER: ContractConfig = {
