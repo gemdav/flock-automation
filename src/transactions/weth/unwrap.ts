@@ -1,7 +1,7 @@
 import { Contract, HDNodeWallet, TransactionRequest } from "ethers";
-import { CONTRACT_WETH } from "../../contracts/contracts.ts";
 import { executeTx } from "../transaction.ts";
 import { TxResult } from "../../types/txResult.ts";
+import { CONTRACT_WETH } from "../../contracts/tokens.ts";
 
 /**
  * Unwraps all WETH for a given wallet into native ETH using Uniswap V3 Router.

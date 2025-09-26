@@ -1,10 +1,10 @@
 import { HDNodeWallet, Contract, parseUnits, TransactionRequest } from "ethers";
 import { executeTx } from "../transaction.ts";
-import { CONTRACT_UNISWAP_V3_ROUTER } from "../../contracts/contracts.ts";
 import { ContractConfig } from "../../types/contractConfig.ts";
 import { UniswapQuote } from "../../types/uniswapQuote.ts";
 import { TxResult } from "../../types/txResult.ts";
 import { sleep } from "../../utils/utils.ts";
+import { CONTRACT_UNISWAP_V3_ROUTER } from "../../contracts/uniswap.ts";
 
 /**
  * Swaps `amountIn` of `tokenIn` for `tokenOut` using Uniswap V3.

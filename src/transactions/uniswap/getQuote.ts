@@ -1,9 +1,9 @@
 import { ethers, formatUnits, JsonRpcProvider, parseUnits } from "ethers";
 import { ContractConfig } from "../../types/contractConfig.ts";
-import { CONTRACT_UNISWAP_V3_QUOTER } from "../../contracts/contracts.ts";
 import { UniswapQuote } from "../../types/uniswapQuote.ts";
 import { log } from "../../utils/logger.ts";
 import { sleep } from "../../utils/utils.ts";
+import { CONTRACT_UNISWAP_V3_QUOTER } from "../../contracts/uniswap.ts";
 
 const PROVIDER_BASE = new JsonRpcProvider("https://mainnet.base.org");
 

@@ -1,8 +1,9 @@
 import { HDNodeWallet, Contract } from "ethers";
 import { executeTx } from "../transaction.ts";
-import { CONTRACT_FLOCK, CONTRACT_GMFLOCK_EXCHANGE } from "../../contracts/contracts.ts";
 import { TxResult } from "../../types/txResult.ts";
 import { sleep } from "../../utils/utils.ts";
+import { CONTRACT_GMFLOCK_EXCHANGE } from "../../contracts/flock.ts";
+import { CONTRACT_FLOCK } from "../../contracts/tokens.ts";
 
 /**
  * Exchanges tokens for FLock and stakes them for one year.

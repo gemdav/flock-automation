@@ -1,4 +1,4 @@
-import { ContractConfig } from "../types/contractConfig";
+import { ContractConfig } from "../types/contractConfig.ts";
 
 export const ERC20_ABI = [
   "function decimals() view returns (uint8)",

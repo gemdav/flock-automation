@@ -4,16 +4,6 @@ import { log, err } from "./utils/logger.ts";
 import { claimRewards } from "./transactions/flock/claimRewards.ts";
 import { balanceOf } from "./transactions/erc20/balanceOf.ts";
 import { exchangeFlock } from "./transactions/flock/exchangeFlock.ts";
-import {
-  CONTRACT_EURC,
-  CONTRACT_FLOCK,
-  CONTRACT_FLOCK_DELEGATE_TOBENO1 as CONTRACT_FLOCK_DELEGATE,
-  CONTRACT_GMFLOCK,
-  CONTRACT_GMFLOCK_EXCHANGE,
-  CONTRACT_UNISWAP_V3_ROUTER,
-  CONTRACT_USDC,
-  CONTRACT_WETH,
-} from "./contracts/contracts.ts";
 import { approve } from "./transactions/erc20/approve.ts";
 import { delegate } from "./transactions/flock/delegate.ts";
 import { getQuote } from "./transactions/uniswap/getQuote.ts";
@@ -22,6 +12,12 @@ import { formatUnits } from "ethers";
 import { unwrap } from "./transactions/weth/unwrap.ts";
 import inquirer from "inquirer";
 import "dotenv/config";
+import {
+  CONTRACT_FLOCK_DELEGATE_ALWAYSONLINE as CONTRACT_FLOCK_DELEGATE,
+  CONTRACT_GMFLOCK_EXCHANGE,
+} from "./contracts/flock.ts";
+import { CONTRACT_EURC, CONTRACT_FLOCK, CONTRACT_GMFLOCK, CONTRACT_USDC, CONTRACT_WETH } from "./contracts/tokens.ts";
+import { CONTRACT_UNISWAP_V3_ROUTER } from "./contracts/uniswap.ts";
 
 const WALLET_METAMASK = createWalletFromSRP(process.env.SRP_METAMASK!);
 const WALLET_KRAKEN = createWalletFromSRP(process.env.SRP_KRAKEN!);
