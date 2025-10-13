@@ -13,7 +13,7 @@ import { unwrap } from "./transactions/weth/unwrap.ts";
 import inquirer from "inquirer";
 import "dotenv/config";
 import {
-  CONTRACT_FLOCK_DELEGATE_ALWAYSONLINE as CONTRACT_FLOCK_DELEGATE,
+  CONTRACT_FLOCK_DELEGATE_KOOLTEK as CONTRACT_FLOCK_DELEGATE,
   CONTRACT_GMFLOCK_EXCHANGE,
 } from "./contracts/flock.ts";
 import { CONTRACT_EURC, CONTRACT_FLOCK, CONTRACT_GMFLOCK, CONTRACT_USDC, CONTRACT_WETH } from "./contracts/tokens.ts";
